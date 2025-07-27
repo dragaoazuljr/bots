@@ -1,0 +1,269 @@
+{
+    "saldo_reais": 48396.582184999905,
+    "saldo_bitcoin": 0.0325,
+    "preco_referencia": 721660.75,
+    "bitcoin_price": 1199996.3,
+    "compras": [
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1236627.44
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1230724.41
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1220992.26
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1218329.62
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1215101.59
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1213751.16
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1207868.52
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1200621.04
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1198972.65
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1195286.61
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1188365.05
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1181633.07
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1178177.3
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1175361.84
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1167183.95
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1163090.13
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1161802.27
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1154438.04
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1147120.78
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1144663.77
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1141301.34
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1133432.35
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1127507.56
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1096464.45
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1092329.48
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1089772.81
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1150028.07
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1142032.77
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1139422.9
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1130895.04
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1129345.96
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1124969.1
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1122879.35
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1114717.34
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1112977.79
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1103953.58
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1097926.15
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1094526.31
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1093334.72
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1088077.64
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1084973.45
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1079819.56
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1072948.06
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1139527.53
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1127162.62
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1112500.87
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1101053.23
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1083848.43
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1206744.89
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1192902.86
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1180257.58
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1165214.25
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1144025.13
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1130210.39
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1114948.95
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1102355.39
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1089621.41
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1073747.78
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1058948.19
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1044512.2
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1092751.37
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1081098.25
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1065894.46
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1048882.71
+        },
+        {
+            "quantidade": 0.0005,
+            "preco_compra": 1037825.17
+        }
+    ],
+    "etapas_sem_comprar": 965
+}
