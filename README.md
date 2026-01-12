@@ -5,10 +5,11 @@ Este script simula operações de compra e venda de Bitcoin com estratégias de 
 ##  Funcionalidades
 
 - **Simulação com Dados Históricos**: Usa preços reais do Bitcoin em granularidade horária
+- **Scaling In/Out Avançado**: Compra em tranches progressivas durante dips e vende em níveis de lucro
 - **Gestão de Risco Avançada**: Stop-loss, take-profit, cooldown e limite de dobras consecutivas
-- **Persistência de Estado**: Salva/carrega estado entre execuções
+- **Persistência de Estado**: Salva/carrega estado entre execuções (incluindo tranches pendentes)
 - **Logging Estruturado**: Logs detalhados em arquivo e console
-- **Relatórios Detalhados**: Análise completa dos resultados
+- **Relatórios Detalhados**: Análise completa dos resultados incluindo posições abertas
 - **Gráficos Interativos**: Visualização de preços, pontos de buy/sell e evolução do saldo
 - **Configuração Flexível**: Parâmetros via linha de comando
 
@@ -38,6 +39,16 @@ python buy-bitcoin-bot.py \
   --max_dobrar 2
 ```
 
+### Execução com Scaling In/Out
+```bash
+python buy-bitcoin-bot.py \
+  --csv_file bitcoin_hourly_usd_last_30days.csv \
+  --tranches_buy 0.25 0.25 0.25 0.25 \
+  --levels_buy -0.005 -0.01 -0.015 -0.02 \
+  --tranches_sell 0.25 0.25 0.25 0.25 \
+  --levels_sell 0.005 0.01 0.02 0.03
+```
+
 ### Execução sem Dados Históricos (Preços Sintéticos)
 ```bash
 python buy-bitcoin-bot.py --montante 10000 --qtd_operacoes 30
@@ -55,6 +66,10 @@ python buy-bitcoin-bot.py --montante 10000 --qtd_operacoes 30
 | `--taxa_cambio` | 5.5 | USD/BRL |
 | `--cooldown_steps` | 5 | Cooldown após stop-loss |
 | `--max_dobrar` | 3 | Máximo de dobras consecutivas |
+| `--tranches_buy` | 0.2 0.3 0.5 | Frações para compras parciais |
+| `--levels_buy` | -0.01 -0.02 -0.03 | Níveis % para comprar tranches |
+| `--tranches_sell` | 0.2 0.3 0.5 | Frações para vendas parciais |
+| `--levels_sell` | 0.01 0.03 0.05 | Níveis % para vender tranches |
 
 ## Formato do CSV
 
@@ -86,17 +101,30 @@ python test_bot.py
 
 ## Estratégia de Trading
 
-1. **Compra**: Início de cada operação
-2. **Monitoramento**: Verificação horária por até 24h (48h se dobrar)
-3. **Venda Automática**:
-   - Take-profit: +10% (ou +20% se dobrar)
-   - Stop-loss: -5% (ou -10% se dobrar)
-   - Venda antecipada: +3% após 50% do tempo
-   - Fim do período: vende ao preço atual
-4. **Gestão de Risco**:
-   - Dobrar aposta após stop-loss (máx. 3 vezes)
-   - Cooldown de 5 horas após stop-loss
-   - Imposto de 15% para vendas > R$35k com lucro
+### Scaling In (Compras Parciais)
+1. **Compra Progressiva**: Divide o montante em tranches compradas em diferentes níveis de dip
+2. **Exemplo**: Com `--tranches_buy 0.2 0.3 0.5` e `--levels_buy -0.01 -0.02 -0.03`:
+   - Compra 20% do montante quando preço cai 1%
+   - Compra mais 30% quando cai 2%
+   - Compra os 50% restantes quando cai 3%
+
+### Scaling Out (Vendas Parciais)
+3. **Venda Progressiva**: Vende tranches em níveis de lucro crescentes usando FIFO
+4. **Exemplo**: Com `--tranches_sell 0.2 0.3 0.5` e `--levels_sell 0.01 0.03 0.05`:
+   - Vende 20% quando lucro atinge 1%
+   - Vende mais 30% quando atinge 3%
+   - Vende os 50% restantes quando atinge 5%
+
+### Condições de Venda Automática
+5. **Stop-loss Total**: Vende tudo se perde mais que o limite configurado
+6. **Meta de Lucro Total**: Completa quando todas as tranches são vendidas
+7. **Venda Antecipada**: Vende tudo com lucro mínimo após 50% do tempo
+8. **Fim dos Dados**: Mantém posições abertas (não força venda) e calcula lucro potencial
+
+### Gestão de Risco
+9. **Dobrar Aposta**: Após stop-loss (máx. 3 vezes consecutivas)
+10. **Cooldown**: Pausa após stop-loss
+11. **Imposto**: 15% para vendas > R$35k com lucro
 
 ## Logs e Debugging
 
