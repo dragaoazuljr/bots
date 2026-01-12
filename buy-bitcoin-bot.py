@@ -9,15 +9,56 @@ import os
 import pandas as pd
 import sys
 
-# Configuração do logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('bot_log.txt'),
-        logging.StreamHandler(sys.stdout)
-    ]
+# Configuração do logging customizado com timestamp da planilha
+class CustomFormatter(logging.Formatter):
+    def __init__(self, fmt=None, datefmt=None, style='%', use_csv_time=False):
+        super().__init__(fmt, datefmt, style)
+        self.use_csv_time = use_csv_time
+        self.csv_timestamp = None
+
+    def set_csv_timestamp(self, timestamp):
+        self.csv_timestamp = timestamp
+
+    def formatTime(self, record, datefmt=None):
+        if self.use_csv_time and self.csv_timestamp:
+            # Usa o timestamp da planilha se disponível
+            if hasattr(self.csv_timestamp, 'strftime'):
+                return self.csv_timestamp.strftime(self.default_time_format)
+            else:
+                # Converte timestamp Unix para datetime se necessário
+                dt = datetime.fromtimestamp(self.csv_timestamp)
+                return dt.strftime(self.default_time_format)
+        else:
+            # Fallback para hora do sistema
+            return super().formatTime(record, datefmt)
+
+# Formatter para arquivo (sempre usa timestamp CSV quando disponível)
+file_formatter = CustomFormatter(
+    '%(asctime)s - %(levelname)s - %(message)s',
+    use_csv_time=True
 )
+
+# Formatter para console (usa timestamp CSV quando disponível)
+console_formatter = CustomFormatter(
+    '%(asctime)s - %(levelname)s - %(message)s',
+    use_csv_time=True
+)
+
+# Configuração dos handlers
+file_handler = logging.FileHandler('bot_log.txt')
+file_handler.setFormatter(file_formatter)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(console_formatter)
+
+# Logger principal
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+# Alias para compatibilidade
+logging = logger
 
 # Configuração de argumentos da linha de comando
 parser = argparse.ArgumentParser(description='Bot de Trading de Bitcoin com Simulação Histórica')
@@ -218,14 +259,6 @@ if args.csv_file:
     if historical_prices is None:
         logging.error("Falha ao carregar preços históricos. Saindo...")
         sys.exit(1)
-    # Verifica se há dados suficientes para as operações
-    min_data_points = args.qtd_operacoes * 10  # Estimativa conservadora
-    if len(historical_prices) < min_data_points:
-        logging.warning(f"Dados históricos insuficientes: {len(historical_prices)} pontos, mínimo estimado: {min_data_points}")
-        adjusted_qtd = len(historical_prices) // 10
-        if adjusted_qtd < args.qtd_operacoes:
-            logging.warning(f"Ajustando qtd_operacoes de {args.qtd_operacoes} para {adjusted_qtd}")
-            qtd_operacoes = adjusted_qtd
 
 total_lucro = saved_state.get('total_lucro', 0.0) if saved_state else 0.0
 total_imposto = saved_state.get('total_imposto', 0.0) if saved_state else 0.0
@@ -262,7 +295,7 @@ if saved_state and 'last_operation_time' in saved_state:
     else:
         last_operation_time = saved_state['last_operation_time']
 
-for op in range(start_op, qtd_operacoes + 1):
+for op in range(start_op, args.qtd_operacoes + 1):
     # Inicializa lucro da operação atual
     if len(lucros) < op:
         lucros.extend([0.0] * (op - len(lucros)))
@@ -294,8 +327,9 @@ for op in range(start_op, qtd_operacoes + 1):
         continue
 
     # === SCALING IN: Compra em tranches progressivas ===
+    logging.info(f"Iniciando operação {op} - Tentando comprar {len(tranches_buy)} tranches em dips")
     btc_tranches = []  # Lista de tranches compradas: [{'btc': qtd, 'preco_compra': preco, 'tranche_idx': idx}]
-    preco_base_compra = last_price  # Preço base para calcular variações de dip
+    preco_base_compra = None  # Será definido no primeiro step
     tranches_compradas = set()  # Índices das tranches já compradas
     total_custo_compra = 0.0
     total_taxa_compra = 0.0
@@ -310,6 +344,10 @@ for op in range(start_op, qtd_operacoes + 1):
             current_index += 1
         else:
             preco_atual = mock_get_bitcoin_price()
+
+        # Define preço base no primeiro step
+        if preco_base_compra is None:
+            preco_base_compra = preco_atual
 
         # Calcula variação acumulada desde o início da operação
         variacao_acumulada = (preco_atual - preco_base_compra) / preco_base_compra if preco_base_compra != 0 else 0.0
@@ -364,11 +402,20 @@ for op in range(start_op, qtd_operacoes + 1):
 
     # Se não conseguiu comprar todas as tranches, continua com o que tem
     if len(tranches_compradas) < len(tranches_buy):
-        logging.warning(f"Apenas {len(tranches_compradas)}/{len(tranches_buy)} tranches compradas (limite {max_steps_in} steps atingido)")
+        if len(tranches_compradas) == 0:
+            logging.warning(f"Operação {op} - Nenhuma tranche comprada! Motivo: Não atingiu níveis de dip suficientes em {max_steps_in} steps")
+        else:
+            logging.warning(f"Operação {op} - Apenas {len(tranches_compradas)}/{len(tranches_buy)} tranches compradas (limite {max_steps_in} steps atingido)")
 
     # Define preco_btc_compra como o preço da primeira tranche (para compatibilidade)
     preco_btc_compra = btc_tranches[0]['preco_compra'] if btc_tranches else preco_base_compra
     variacao_compra = ((preco_btc_compra - last_price) / last_price) if last_price != 0 else 0.0
+
+    # Log final da compra
+    if btc_tranches:
+        logging.info(f"Operação {op} - Compra concluída: {len(tranches_compradas)}/{len(tranches_buy)} tranches, total {btc_total:.5f} BTC, custo total R${custo:,.2f}")
+    else:
+        logging.error(f"Operação {op} - Compra fracassada: Nenhuma tranche comprada, iniciando monitoramento vazio")
 
     # Monitora o preço por até max_duration_atual (24h ou 48h)
     elapsed_time = 0
@@ -390,13 +437,30 @@ for op in range(start_op, qtd_operacoes + 1):
             current_price = historical_prices[current_index] if historical_prices else mock_get_bitcoin_price()
             current_index += 1
             elapsed_time += 3600  # Ainda conta o tempo para verificações de limite
+
+            # Atualiza timestamp nos formatters de log
+            file_formatter.set_csv_timestamp(current_time)
+            console_formatter.set_csv_timestamp(current_time)
         else:
             # Fallback para simulação quando não há mais dados históricos
             elapsed_time += 3600  # 1 hora em segundos
             current_time = simulated_start_time + timedelta(seconds=elapsed_time)
             current_price = mock_get_bitcoin_price()
 
+            # Remove timestamp customizado quando usar dados sintéticos
+            file_formatter.set_csv_timestamp(None)
+            console_formatter.set_csv_timestamp(None)
+
         # === SCALING OUT: Verifica vendas parciais em níveis de lucro ===
+
+        # Se não há BTC comprado, termina operação imediatamente
+        if not btc_tranches:
+            logging.info(f"Operação {op} - Sem BTC para monitorar, operação concluída com lucro R$0.00")
+            sold = True
+            motivo_venda = "Sem Compra (Operação Vazia)"
+            lucro = 0.0
+            variacao_venda = 0.0
+            break
 
         # Calcula variação média ponderada para stop-loss (baseada no custo total)
         variacao_atual = (current_price * btc_total - custo) / custo if custo > 0 else 0.0
@@ -617,7 +681,7 @@ POSIÇÕES ABERTAS:
 
 CONFIGURAÇÕES:
 - Montante inicial: R${montante_inicial:,.2f}
-- Número de operações: {qtd_operacoes}
+- Número de operações: {args.qtd_operacoes}
 - Meta de lucro: {meta_lucro*100:.1f}%
 - Stop-loss: {stop_loss*100:.1f}%
 - Taxa de transação: {taxa_transacao*100:.2f}%
