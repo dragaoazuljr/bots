@@ -5,3 +5,9 @@ bot_log.txt
 bot_state.json
 simulacao_horaria.png
 relatorio_final.txt
+outputs/
+data/
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc

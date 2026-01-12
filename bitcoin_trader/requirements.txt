@@ -2,3 +2,4 @@ requests
 pycoingecko
 pandas
 matplotlib
+pytest
