@@ -300,6 +300,9 @@ for op in range(start_op, args.qtd_operacoes + 1):
     if len(lucros) < op:
         lucros.extend([0.0] * (op - len(lucros)))
 
+    # Flag para controlar se houve operação real nesta iteração
+    operacao_realizada = False
+
     # Simula o início da operação
     start_time = time()
     simulated_start_time = current_operation_time
@@ -385,6 +388,7 @@ for op in range(start_op, args.qtd_operacoes + 1):
 
                 logging.info(f"Tranche {i+1}/{len(tranches_buy)} comprada: {btc_tranche:.5f} BTC a R${preco_atual:,.2f} (dip {variacao_acumulada*100:.2f}%)")
                 tranche_comprada_neste_step = True
+                operacao_realizada = True
                 break
 
         # Avança step se não comprou tranche neste step
@@ -478,6 +482,7 @@ for op in range(start_op, args.qtd_operacoes + 1):
             cooldown_remaining = args.cooldown_steps  # Inicia cooldown
             sell_points.append((current_index - 1, preco_btc_venda))
             sold = True
+            operacao_realizada = True
             btc_total = 0
             btc_tranches = []  # FIX: zera btc_tranches
 
@@ -513,6 +518,7 @@ for op in range(start_op, args.qtd_operacoes + 1):
 
                         # Remove tranche da lista
                         tranches_vendidas_neste_step.append(tranche)
+                        operacao_realizada = True
                         break
 
             # Remove tranches vendidas
@@ -540,6 +546,7 @@ for op in range(start_op, args.qtd_operacoes + 1):
             motivo_venda = "Venda Antecipada Total"
             sell_points.append((current_index - 1, preco_btc_venda))
             sold = True
+            operacao_realizada = True
             btc_total = 0
             btc_tranches = []  # FIX: zera btc_tranches
         # elif elapsed_time >= max_duration_atual:
@@ -590,7 +597,10 @@ for op in range(start_op, args.qtd_operacoes + 1):
     precos_venda.append(preco_btc_venda)
     variacoes_compra.append(variacao_compra * 100)
     variacoes_venda.append(variacao_venda * 100)
-    saldo_history.append(montante)
+
+    # Adiciona ao histórico do saldo apenas se houve operação real
+    if operacao_realizada:
+        saldo_history.append(montante)
 
     # Atualiza o motivo da venda para a próxima iteração
     ultimo_motivo_venda = motivo_venda
@@ -727,7 +737,7 @@ generate_final_report(last_operation_time, btc_tranches, last_price)
 # Gráfico melhorado
 def create_enhanced_graph():
     """Cria gráfico melhorado com preços históricos, pontos de buy/sell e saldo."""
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10))
 
     # Gráfico superior: Preços históricos com pontos de buy/sell
     if historical_prices:
@@ -745,7 +755,7 @@ def create_enhanced_graph():
             ax1.scatter(sell_indices, sell_prices, color='red', s=100, marker='v', label='Vendas', zorder=5)
 
         ax1.set_ylabel('Preço BTC (R$)', color='blue')
-        ax1.set_title('Simulação do Bot com Dados Históricos Horários (Dez/2025 - Jan/2026)')
+        ax1.set_title('Simulação do Bot com Dados Históricos Horários')
         ax1.legend(loc='upper left')
         ax1.grid(True, alpha=0.3)
     else:
@@ -756,12 +766,19 @@ def create_enhanced_graph():
         ax1.legend()
 
     # Gráfico inferior: Evolução do saldo
-    x_saldo = range(1, len(saldo_history) + 1)
-    ax2.plot(x_saldo, saldo_history, color='orange', linewidth=2, marker='o', markersize=4, label='Saldo (R$)')
-    ax2.fill_between(x_saldo, saldo_history, alpha=0.3, color='orange')
-    ax2.set_xlabel('Operação / Step')
-    ax2.set_ylabel('Saldo (R$)', color='orange')
-    ax2.set_title('Evolução do Saldo ao Longo da Simulação')
+    if saldo_history:
+        x_saldo = range(1, len(saldo_history) + 1)
+        ax2.plot(x_saldo, saldo_history, color='orange', linewidth=2, marker='o', markersize=4, label='Saldo (R$)')
+        ax2.fill_between(x_saldo, saldo_history, alpha=0.3, color='orange')
+        ax2.set_xlabel('Operações Executadas')
+        ax2.set_ylabel('Saldo (R$)', color='orange')
+        ax2.set_title('Evolução do Saldo por Operação Executada')
+    else:
+        # Se não houve operações, mostra mensagem
+        ax2.text(0.5, 0.5, 'Nenhuma operação executada', ha='center', va='center', transform=ax2.transAxes)
+        ax2.set_xlabel('Operações Executadas')
+        ax2.set_ylabel('Saldo (R$)', color='orange')
+        ax2.set_title('Evolução do Saldo por Operação Executada')
     ax2.legend(loc='upper left')
     ax2.grid(True, alpha=0.3)
 
