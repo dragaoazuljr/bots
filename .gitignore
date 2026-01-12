@@ -1,6 +1,6 @@
 compras_pendentes.json
 .env
-bitcoin_hourly_usd_last_*
+bitcoin_hourly_usd_*
 bot_log.txt
 bot_state.json
 simulacao_horaria.png

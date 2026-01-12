@@ -92,6 +92,46 @@ Timestamp_ms,Datetime,Price_USD
 - `relatorio_final.txt`: Relatório completo dos resultados
 - `simulacao_horaria.png`: Gráfico da simulação
 
+## Coleta de Dados Históricos
+
+### Script: `get-montly-bitcoin-data.py`
+
+Este script coleta dados históricos do Bitcoin da API CoinGecko e salva em formato CSV.
+
+#### Como Usar
+
+**Modo com período específico:**
+```bash
+python get-montly-bitcoin-data.py --start-date 2025-12-01 --end-date 2025-12-31
+```
+
+**Modo com número de dias (compatibilidade):**
+```bash
+python get-montly-bitcoin-data.py --days 30
+```
+
+#### Parâmetros
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `--start-date` | Data inicial no formato YYYY-MM-DD |
+| `--end-date` | Data final no formato YYYY-MM-DD |
+| `--days` | Número de dias para buscar (modo alternativo) |
+
+#### Características
+
+- **API CoinGecko**: Dados reais do mercado
+- **Granularidade Automática**:
+  - Até 90 dias: dados hora a hora
+  - Acima de 90 dias: dados diários
+- **Limitação Gratuita**: Apenas dados dos últimos 365 dias
+- **Formato CSV**: Compatível com o bot de trading
+
+#### Arquivos Gerados
+
+- `bitcoin_data_STARTDATE_to_ENDDATE.csv` (modo datas específicas)
+- `bitcoin_hourly_usd_last_Xdays.csv` (modo dias)
+
 ## Testes
 
 Execute os testes unitários:
