@@ -83,6 +83,12 @@ def _add_trading_arguments(subparser: argparse.ArgumentParser) -> None:
         default=[0.01, 0.03, 0.05],
         help="Níveis percentuais para vender tranches",
     )
+    subparser.add_argument(
+        "--max-steps-in",
+        type=int,
+        default=168,
+        help="Máximo de steps/horas para completar scaling in. Default: 168",
+    )
 
 
 def parse_args(project_root: Path) -> Tuple[AppConfig, Paths]:
@@ -101,6 +107,7 @@ def parse_args(project_root: Path) -> Tuple[AppConfig, Paths]:
         levels_buy=tuple(args.levels_buy) if hasattr(args, "levels_buy") else (-0.01, -0.02, -0.03),
         tranches_sell=tuple(args.tranches_sell) if hasattr(args, "tranches_sell") else (0.2, 0.3, 0.5),
         levels_sell=tuple(args.levels_sell) if hasattr(args, "levels_sell") else (0.01, 0.03, 0.05),
+        max_steps_in=args.max_steps_in if hasattr(args, "max_steps_in") else 168,
     )
 
     fetch_cfg = FetchConfig(

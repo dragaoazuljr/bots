@@ -174,7 +174,7 @@ class TradingEngine:
         total_custo_compra = 0.0
         total_taxa_compra = 0.0
         steps_in = 0
-        max_steps_in = 24
+        max_steps_in = params.max_steps_in
         simulated_start_time = state.current_operation_time
         comprou_algo = False
 
@@ -210,6 +210,9 @@ class TradingEngine:
                     break
 
             if not tranche_comprada_neste_step:
+                self.logger.debug(
+                    f"Step {steps_in}: Preço atual R${preco_atual:,.2f}, Variação acumulada {variacao_acumulada*100:.2f}%"
+                )
                 steps_in += 1
 
             if market and state.current_index >= market.length():

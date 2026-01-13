@@ -79,6 +79,7 @@ python -m src.main real --exchange mock --montante 10000
 | `--levels-buy`         | -0.01 -0.02 -0.03 | Níveis (%) de compra |
 | `--tranches-sell`      | 0.2 0.3 0.5 | Frações de venda |
 | `--levels-sell`        | 0.01 0.03 0.05 | Níveis (%) de venda |
+| `--max-steps-in`       | 168 | Máx. steps/horas para completar scaling in |
 
 Validações garantem que as tranches somam 1.0 e que níveis de compra são negativos e de venda positivos.
 

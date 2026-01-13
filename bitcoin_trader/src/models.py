@@ -26,6 +26,7 @@ class TradingParams:
     time_percentage_to_sell: float = 0.5
     max_duration_hours: int = 24
     min_stop_loss_time_hours: int = 6
+    max_steps_in: int = 168
 
 
 @dataclass
