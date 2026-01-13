@@ -130,7 +130,20 @@ class TradingEngine:
         if motivo_venda == "Stop-loss Total":
             state.cooldown_remaining = params.cooldown_steps
 
+        # Armazenar detalhes da operação
         if operacao_realizada:
+            operation_detail = {
+                "operation_id": op,
+                "lucro": lucro,
+                "preco_compra": preco_btc_compra,
+                "preco_venda": preco_btc_venda,
+                "motivo_venda": motivo_venda,
+                "btc_comprado": btc_total,
+                "custo_total": custo_total,
+                "start_time": start_time,
+                "end_time": current_time,
+            }
+            state.operation_details.append(operation_detail)
             state.saldo_history.append(state.montante)
 
         state.last_operation_time = current_time
@@ -178,6 +191,13 @@ class TradingEngine:
         simulated_start_time = state.current_operation_time
         comprou_algo = False
 
+        # Salva montante inicial da operação para alocação fixa de tranches
+        initial_montante = state.montante
+
+        # Controle para forçar avanço mínimo de steps entre tranches
+        steps_since_last_tranche = float('inf')  # Permite primeira tranche imediatamente
+        min_steps_between_tranches = 1  # Mínimo 1 step entre tranches
+
         self.logger.info(f"Iniciando operação {op} - Tentando comprar {len(params.tranches_buy)} tranches em dips")
 
         while len(tranches_compradas) < len(params.tranches_buy) and steps_in < max_steps_in:
@@ -188,10 +208,13 @@ class TradingEngine:
 
             variacao_acumulada = (preco_atual - preco_base_compra) / preco_base_compra if preco_base_compra else 0.0
             tranche_comprada_neste_step = False
+            steps_since_last_tranche += 1
 
             for i, (tranche_fraction, level) in enumerate(zip(params.tranches_buy, params.levels_buy)):
-                if i not in tranches_compradas and variacao_acumulada <= level:
-                    montante_tranche = state.montante * tranche_fraction
+                if i not in tranches_compradas and variacao_acumulada <= level and steps_since_last_tranche >= min_steps_between_tranches:
+                    # Usa montante inicial da operação se fixed_tranche_allocation estiver ativo
+                    montante_base = initial_montante if params.fixed_tranche_allocation else state.montante
+                    montante_tranche = montante_base * tranche_fraction
                     btc_tranche, taxa_tranche = self.exchange.buy(
                         montante_tranche, preco_atual, simulated_start_time
                     )
@@ -205,8 +228,10 @@ class TradingEngine:
                         f"Tranche {i+1}/{len(params.tranches_buy)} comprada: {btc_tranche:.5f} BTC a R${preco_atual:,.2f} "
                         f"(dip {variacao_acumulada*100:.2f}%)"
                     )
+                    self.logger.info(f"Tranche {i+1}: Alocando R${montante_tranche:,.2f} do montante base R${montante_base:,.2f}")
                     tranche_comprada_neste_step = True
                     comprou_algo = True
+                    steps_since_last_tranche = 0  # Reseta contador para próxima tranche
                     break
 
             if not tranche_comprada_neste_step:
@@ -311,6 +336,14 @@ class TradingEngine:
                 btc_total = 0
                 btc_tranches = []
 
+                # Log detalhado da venda por stop-loss
+                self.logger.info(
+                    f"VENDA STOP-LOSS - {tempo_atual.strftime('%Y-%m-%d %H:%M:%S')} - "
+                    f"Lucro: R${lucro:,.2f} ({variacao_venda*100:.2f}%) - "
+                    f"Compra média: R${preco_btc_compra:,.2f} - Venda: R${preco_btc_venda:,.2f} - "
+                    f"BTC: {btc_total:.5f} - Valor venda: R${valor_venda:,.2f}"
+                )
+
             elif variacao_atual >= meta_lucro_atual and btc_tranches:
                 preco_btc_venda = preco_atual
                 variacao_venda = variacao_atual
@@ -328,6 +361,14 @@ class TradingEngine:
                 btc_total = 0
                 btc_tranches = []
 
+                # Log detalhado da venda por meta de lucro
+                self.logger.info(
+                    f"VENDA META LUCRO - {tempo_atual.strftime('%Y-%m-%d %H:%M:%S')} - "
+                    f"Lucro: R${lucro:,.2f} ({variacao_venda*100:.2f}%) - "
+                    f"Compra média: R${preco_btc_compra:,.2f} - Venda: R${preco_btc_venda:,.2f} - "
+                    f"BTC: {btc_total:.5f} - Valor venda: R${valor_venda:,.2f}"
+                )
+
             elif btc_tranches:
                 tranches_vendidas = []
                 for tranche in sorted(btc_tranches[:], key=lambda x: x["tranche_idx"]):
@@ -344,6 +385,14 @@ class TradingEngine:
                             state.sell_points.append((max(state.current_index - 1, 0), preco_atual))
                             tranches_vendidas.append(tranche)
                             operacao_realizada = True
+
+                            # Log detalhado da venda parcial por tranche
+                            self.logger.info(
+                                f"VENDA TRANCHE {tranche['tranche_idx']+1} - {tempo_atual.strftime('%Y-%m-%d %H:%M:%S')} - "
+                                f"Lucro parcial: R${lucro_parcial:,.2f} ({variacao_tranche*100:.2f}%) - "
+                                f"Compra: R${tranche['preco_compra']:,.2f} - Venda: R${preco_atual:,.2f} - "
+                                f"BTC: {btc_vendido:.5f} - Valor venda: R${valor_vendido:,.2f}"
+                            )
                             break
 
                 for tranche in tranches_vendidas:
@@ -355,6 +404,13 @@ class TradingEngine:
                     variacao_venda = (preco_atual - preco_btc_compra) / preco_btc_compra if preco_btc_compra else 0.0
                     motivo_venda = "Meta de Lucro Total (Scaling Out)"
                     sold = True
+
+                    # Log detalhado do scaling out (todas as tranches vendidas)
+                    self.logger.info(
+                        f"SCALING OUT COMPLETO - {tempo_atual.strftime('%Y-%m-%d %H:%M:%S')} - "
+                        f"Lucro total: R${lucro:,.2f} ({variacao_venda*100:.2f}%) - "
+                        f"Compra média: R${preco_btc_compra:,.2f} - Última venda: R${preco_atual:,.2f}"
+                    )
 
             elif elapsed_time >= max_duration_atual * params.time_percentage_to_sell and variacao_atual >= params.lucro_minimo:
                 preco_btc_venda = preco_atual
@@ -372,6 +428,14 @@ class TradingEngine:
                 operacao_realizada = True
                 btc_total = 0
                 btc_tranches = []
+
+                # Log detalhado da venda antecipada
+                self.logger.info(
+                    f"VENDA ANTECIPADA - {tempo_atual.strftime('%Y-%m-%d %H:%M:%S')} - "
+                    f"Lucro: R${lucro:,.2f} ({variacao_venda*100:.2f}%) - "
+                    f"Compra média: R${preco_btc_compra:,.2f} - Venda: R${preco_btc_venda:,.2f} - "
+                    f"BTC: {btc_total:.5f} - Valor venda: R${valor_venda:,.2f}"
+                )
 
             if market and state.current_index >= market.length():
                 motivo_venda = "Fim dos Dados (Posição Aberta)"

@@ -81,6 +81,19 @@ GESTÃO DE RISCO:
 - Cooldown após stop-loss: {params.cooldown_steps} steps
 - Taxa de câmbio USD/BRL: {params.taxa_cambio}
 """
+    # Adicionar detalhes das operações
+    if state.operation_details:
+        report += "\nDETALHES DAS OPERAÇÕES:\n"
+        for op_detail in state.operation_details:
+            report += f"""
+Operação #{op_detail['operation_id']}:
+- Motivo venda: {op_detail['motivo_venda']}
+- Lucro: R${op_detail['lucro']:,.2f}
+- Compra média: R${op_detail['preco_compra']:,.2f} | Venda média: R${op_detail['preco_venda']:,.2f}
+- BTC total: {op_detail['btc_comprado']:.5f} | Custo total: R${op_detail['custo_total']:,.2f}
+- Período: {op_detail['start_time'].strftime('%Y-%m-%d %H:%M:%S')} até {op_detail['end_time'].strftime('%Y-%m-%d %H:%M:%S')}
+"""
+
     outputs_dir.mkdir(parents=True, exist_ok=True)
     (outputs_dir / "relatorio_final.txt").write_text(report, encoding="utf-8")
     return report

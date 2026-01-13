@@ -41,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     real_parser.add_argument(
         "--force-graph",
         action="store_true",
-        help="Força geração de gráfico mesmo fora do horário planejado (meia-noite)",
+        help="Força geração de gráfico mesmo fora do horário planejado (meia-noite)"
     )
 
     return parser
@@ -89,6 +89,17 @@ def _add_trading_arguments(subparser: argparse.ArgumentParser) -> None:
         default=168,
         help="Máximo de steps/horas para completar scaling in. Default: 168",
     )
+    subparser.add_argument(
+        "--fixed-tranche-allocation",
+        action="store_true",
+        help="Usar percentual do montante inicial ao inves do saldo atual para tranches",
+    )
+    subparser.add_argument(
+        "--max-duration-hours",
+        type=int,
+        default=24,
+        help="Duração máxima da operação em horas. Default: 24",
+    )
 
 
 def parse_args(project_root: Path) -> Tuple[AppConfig, Paths]:
@@ -108,6 +119,8 @@ def parse_args(project_root: Path) -> Tuple[AppConfig, Paths]:
         tranches_sell=tuple(args.tranches_sell) if hasattr(args, "tranches_sell") else (0.2, 0.3, 0.5),
         levels_sell=tuple(args.levels_sell) if hasattr(args, "levels_sell") else (0.01, 0.03, 0.05),
         max_steps_in=args.max_steps_in if hasattr(args, "max_steps_in") else 168,
+        fixed_tranche_allocation=getattr(args, "fixed_tranche_allocation", False),
+        max_duration_hours=getattr(args, "max_duration_hours", 24),
     )
 
     fetch_cfg = FetchConfig(

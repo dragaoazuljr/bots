@@ -27,6 +27,7 @@ class TradingParams:
     max_duration_hours: int = 24
     min_stop_loss_time_hours: int = 6
     max_steps_in: int = 168
+    fixed_tranche_allocation: bool = False
 
 
 @dataclass
@@ -54,6 +55,7 @@ class BotState:
     ultimo_motivo_venda: Optional[str] = None
     consecutive_losses: int = 0
     cooldown_remaining: int = 0
+    operation_details: List[dict] = field(default_factory=list)  # Detalhes de cada operação realizada
 
 
 @dataclass
